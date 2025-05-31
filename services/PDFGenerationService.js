@@ -1,6 +1,7 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 import Colors from '../constants/colors';
 
 class PDFGenerationService {
@@ -15,11 +16,14 @@ class PDFGenerationService {
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
             body {
-              font-family: Arial, sans-serif;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
               color: #333;
               padding: 20px;
+              line-height: 1.6;
             }
             .header {
               text-align: center;
@@ -29,46 +33,67 @@ class PDFGenerationService {
             }
             .score-card {
               background: #f5f5f5;
-              padding: 15px;
-              border-radius: 8px;
-              margin-bottom: 20px;
+              padding: 20px;
+              border-radius: 12px;
+              margin-bottom: 24px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
             .score-item {
               display: flex;
               justify-content: space-between;
-              margin: 10px 0;
-              padding: 10px;
+              margin: 12px 0;
+              padding: 16px;
               background: white;
-              border-radius: 4px;
+              border-radius: 8px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             }
             .assessment {
               border-left: 4px solid ${assessment.color};
-              padding: 15px;
+              padding: 20px;
               background: #f9f9f9;
-              margin: 20px 0;
+              margin: 24px 0;
+              border-radius: 0 12px 12px 0;
             }
             .section-title {
               color: ${Colors.primary};
-              font-size: 18px;
+              font-size: 20px;
               font-weight: bold;
-              margin: 20px 0 10px 0;
+              margin: 24px 0 16px 0;
             }
             .chart-container {
-              margin: 20px 0;
+              margin: 24px 0;
               text-align: center;
+            }
+            .recommendation-item {
+              background: white;
+              padding: 16px;
+              margin: 12px 0;
+              border-radius: 8px;
+              border-left: 4px solid ${Colors.primary};
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+              .score-card {
+                break-inside: avoid;
+              }
+              .assessment {
+                break-inside: avoid;
+              }
             }
           </style>
         </head>
         <body>
           <div class="header">
-            <h1>PhishGuard Assessment Report</h1>
-            <p>Generated on ${new Date().toLocaleDateString()}</p>
+            <h1 style="color: ${Colors.text}">PhishGuard Assessment Report</h1>
+            <p style="color: ${Colors.darkGray}">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
           </div>
 
           <div class="section-title">Overall Assessment</div>
           <div class="assessment">
-            <h3 style="color: ${assessment.color}">Score: ${Math.round(avgScore)}%</h3>
-            <p>${assessment.text}</p>
+            <h3 style="color: ${assessment.color}; margin-top: 0;">Score: ${Math.round(avgScore)}%</h3>
+            <p style="margin-bottom: 0;">${assessment.text}</p>
           </div>
 
           <div class="section-title">Detailed Scores</div>
@@ -77,22 +102,29 @@ class PDFGenerationService {
               .map(([category, score]) => `
                 <div class="score-item">
                   <strong>${category}</strong>
-                  <span style="color: ${this.getScoreColor(score)}">${Math.round(score)}%</span>
+                  <span style="color: ${this.getScoreColor(score)}; font-weight: bold;">${Math.round(score)}%</span>
                 </div>
               `).join('')}
           </div>
 
           <div class="section-title">Analysis Breakdown</div>
           <div class="score-card">
-            <p><strong>Rapport Building (${Math.round(moduleScores['Rapport Building'])}%):</strong> Measures your ability to identify and maintain secure communication practices.</p>
-            <p><strong>Personality (${Math.round(moduleScores['Personality'])}%):</strong> Evaluates your natural tendencies in handling security-related situations.</p>
-            <p><strong>Cognitive Pattern (${Math.round(moduleScores['Cognitive Pattern'])}%):</strong> Assesses your analytical approach to potential security threats.</p>
-            <p><strong>Risk Assessment (${Math.round(moduleScores['Risk Assessment'])}%):</strong> Examines your risk awareness and decision-making in security contexts.</p>
+            ${Object.entries(moduleScores).map(([category, score]) => `
+              <div class="recommendation-item">
+                <h4 style="margin-top: 0; color: ${Colors.text}">${category} (${Math.round(score)}%)</h4>
+                <p style="margin-bottom: 0; color: ${Colors.darkGray}">${this.getCategoryDescription(category, score)}</p>
+              </div>
+            `).join('')}
           </div>
 
           <div class="section-title">Recommendations</div>
           <div class="score-card">
             ${this.generateRecommendations(moduleScores)}
+          </div>
+
+          <div style="text-align: center; margin-top: 40px; color: ${Colors.darkGray}; font-size: 12px;">
+            <p>Generated by PhishGuard Assessment Tool</p>
+            <p>© ${new Date().getFullYear()} PhishGuard. All rights reserved.</p>
           </div>
         </body>
       </html>
@@ -106,64 +138,129 @@ class PDFGenerationService {
     return '#FF4B4B';
   }
 
+  getCategoryDescription(category, score) {
+    const descriptions = {
+      'Report': 'Measures your ability to identify and maintain secure communication practices.',
+      'Personality': 'Evaluates your natural tendencies in handling security-related situations.',
+      'Cognitive Pattern': 'Assesses your analytical approach to potential security threats.',
+      'Risk Assessment': 'Examines your risk awareness and decision-making in security contexts.'
+    };
+    return descriptions[category] || 'Category description not available.';
+  }
+
   generateRecommendations(scores) {
     let recommendations = [];
 
-    if (scores['Rapport Building'] < 64) {
-      recommendations.push('Focus on developing stronger security communication practices and awareness of social engineering tactics.');
-    }
-    if (scores['Personality'] < 64) {
-      recommendations.push('Work on building more security-conscious habits and responses to potential threats.');
-    }
-    if (scores['Cognitive Pattern'] < 64) {
-      recommendations.push('Enhance your analytical skills in identifying and evaluating security risks.');
-    }
-    if (scores['Risk Assessment'] < 64) {
-      recommendations.push('Improve your understanding of security risks and develop more cautious decision-making processes.');
-    }
+    Object.entries(scores).forEach(([category, score]) => {
+      if (score < 64) {
+        recommendations.push(this.getRecommendation(category, score));
+      }
+    });
 
     if (recommendations.length === 0) {
-      recommendations.push('Maintain your excellent security awareness and continue staying updated on latest security practices.');
+      recommendations.push({
+        title: 'Maintain Excellence',
+        text: 'Continue your excellent security practices and stay updated with the latest security trends.'
+      });
     }
 
-    return recommendations.map(rec => `<p>• ${rec}</p>`).join('');
+    return recommendations.map(rec => `
+      <div class="recommendation-item">
+        <h4 style="margin-top: 0; color: ${Colors.text}">${rec.title}</h4>
+        <p style="margin-bottom: 0; color: ${Colors.darkGray}">${rec.text}</p>
+      </div>
+    `).join('');
+  }
+
+  getRecommendation(category, score) {
+    const recommendations = {
+      'Report': {
+        title: 'Improve Security Communication',
+        text: 'Focus on developing stronger security communication practices and awareness of social engineering tactics.'
+      },
+      'Personality': {
+        title: 'Enhance Security Habits',
+        text: 'Work on building more security-conscious habits and responses to potential threats.'
+      },
+      'Cognitive Pattern': {
+        title: 'Strengthen Analytical Skills',
+        text: 'Enhance your analytical skills in identifying and evaluating security risks.'
+      },
+      'Risk Assessment': {
+        title: 'Improve Risk Awareness',
+        text: 'Develop a better understanding of security risks and implement more cautious decision-making processes.'
+      }
+    };
+    return recommendations[category] || {
+      title: 'General Improvement',
+      text: 'Focus on improving your overall security awareness and practices.'
+    };
   }
 
   async generatePDF(data) {
     try {
       const html = this.generateHTML(data);
       
-      // Generate PDF using expo-print
-      const file = await Print.printToFileAsync({
-        html,
-        base64: false
-      });
+      if (Platform.OS === 'web') {
+        // For web, create and download PDF using browser's print functionality
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.print();
+          return null;
+        } else {
+          throw new Error('Unable to open print window. Please check if pop-ups are blocked.');
+        }
+      } else {
+        // For mobile platforms, use expo-print
+        const file = await Print.printToFileAsync({
+          html,
+          base64: false
+        });
 
-      // Move file to documents directory for sharing
-      const filename = 'PhishGuard_Assessment_Report.pdf';
-      const documentPath = `${FileSystem.documentDirectory}${filename}`;
-      
-      await FileSystem.moveAsync({
-        from: file.uri,
-        to: documentPath
-      });
+        // Move file to documents directory for sharing
+        const filename = `PhishGuard_Assessment_${new Date().toISOString().split('T')[0]}.pdf`;
+        const documentPath = `${FileSystem.documentDirectory}${filename}`;
+        
+        await FileSystem.moveAsync({
+          from: file.uri,
+          to: documentPath
+        });
 
-      return documentPath;
+        return documentPath;
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      throw error;
+      throw new Error(`Failed to generate PDF: ${error.message}`);
     }
   }
 
   async sharePDF(filePath) {
     try {
+      if (Platform.OS === 'web') {
+        // Web platform doesn't need sharing as the PDF is already handled in generatePDF
+        return;
+      }
+
+      if (!filePath) {
+        throw new Error('No PDF file path provided');
+      }
+
+      const canShare = await Sharing.isAvailableAsync();
+      
+      if (!canShare) {
+        throw new Error('Sharing is not available on this device');
+      }
+
       await Sharing.shareAsync(filePath, {
         mimeType: 'application/pdf',
-        dialogTitle: 'Share Your Assessment Report'
+        dialogTitle: 'Share Your Assessment Report',
+        UTI: 'com.adobe.pdf' // Required for iOS
       });
     } catch (error) {
       console.error('Error sharing PDF:', error);
-      throw error;
+      throw new Error(`Failed to share PDF: ${error.message}`);
     }
   }
 }

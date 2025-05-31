@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start --tunnel --clear",
+    "start": "expo start --web --tunnel --clear",
     "start-web": "expo start --web --tunnel --clear",
     "start-web-dev": "DEBUG=expo* expo start --web --tunnel --clear"
   },
@@ -14,7 +14,6 @@
     "@expo/vector-icons": "^14.0.2",
     "@google/generative-ai": "^0.22.0",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-native-voice/voice": "^3.2.4",
     "@react-navigation/native": "^7.0.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "expo": "^52.0.42",
@@ -38,19 +37,16 @@
     "expo-sharing": "^13.0.1",
     "expo-splash-screen": "~0.29.22",
     "expo-status-bar": "~2.0.0",
-    "expo-symbols": "~0.2.0",
     "expo-system-ui": "~4.0.9",
     "expo-web-browser": "~14.0.1",
     "lucide-react-native": "^0.475.0",
     "metro": "^0.81.0",
     "metro-resolver": "^0.81.0",
-    "nativewind": "^4.1.23",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.8",
     "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.20.2",
-    "react-native-html-to-pdf-lite": "^0.11.0",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
@@ -66,6 +62,11 @@
   },
   "private": true,
   "expo": {
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
     "doctor": {
       "reactNativeDirectoryCheck": {
         "exclude": [

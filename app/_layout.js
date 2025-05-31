@@ -2,6 +2,7 @@ import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { useAuthStore } from "../stores/auth-store";
 import { ErrorBoundary } from "./error-boundry";
 import { ScreenshotPreventionProvider } from "./ScreenshotPreventionContext";
@@ -33,9 +34,13 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <ScreenshotPreventionProvider>
+      {Platform.OS !== 'web' ? (
+        <ScreenshotPreventionProvider>
+          <RootLayoutNav />
+        </ScreenshotPreventionProvider>
+      ) : (
         <RootLayoutNav />
-      </ScreenshotPreventionProvider>
+      )}
     </ErrorBoundary>
   );
 }
@@ -45,16 +50,12 @@ function RootLayoutNav() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
 
-  // Move the navigation logic to useEffect to prevent state updates on unmounted components
   useEffect(() => {
-    // Check if the user is authenticated
     const inAuthGroup = segments[0] === "auth";
     
     if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to the login page if not authenticated
       router.replace("/auth/login");
     } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to the main app if authenticated
       router.replace("/app/landing");
     }
   }, [isAuthenticated, segments, router]);

@@ -10,7 +10,6 @@ class ScreenshotPreventionService {
   enablePrevention = async () => {
     if (Platform.OS === 'android') {
       try {
-        // Prevent screen capture
         await ScreenCapture.preventScreenCaptureAsync();
         this.isEnabled = true;
         console.log('Screenshot prevention enabled');
@@ -24,7 +23,6 @@ class ScreenshotPreventionService {
   disablePrevention = async () => {
     if (Platform.OS === 'android') {
       try {
-        // Allow screen capture
         await ScreenCapture.allowScreenCaptureAsync();
         this.isEnabled = false;
         console.log('Screenshot prevention disabled');
